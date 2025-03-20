@@ -1,39 +1,18 @@
-//
-//  MeasurementApp.swift
-//  Measurement
-//
-//  Created by Lorenzo Benedetti on 20/03/25.
-//
-
 import SwiftUI
 
 @main
 struct MeasurementApp: App {
-
-    @State private var appModel = AppModel()
-    @State private var avPlayerViewModel = AVPlayerViewModel()
-
+    @StateObject private var appModel = AppModel()
+    
     var body: some Scene {
         WindowGroup {
-            if avPlayerViewModel.isPlaying {
-                AVPlayerView(viewModel: avPlayerViewModel)
-            } else {
-                ContentView()
-                    .environment(appModel)
-            }
+            ContentView()
+                .environmentObject(appModel)
         }
-
-        ImmersiveSpace(id: appModel.immersiveSpaceID) {
+        
+        ImmersiveSpace(id: "ImmersiveSpace") {
             ImmersiveView()
-                .environment(appModel)
-                .onAppear {
-                    appModel.immersiveSpaceState = .open
-                    avPlayerViewModel.play()
-                }
-                .onDisappear {
-                    appModel.immersiveSpaceState = .closed
-                    avPlayerViewModel.reset()
-                }
+                .environmentObject(appModel)
         }
         .immersionStyle(selection: .constant(.progressive), in: .progressive)
     }
