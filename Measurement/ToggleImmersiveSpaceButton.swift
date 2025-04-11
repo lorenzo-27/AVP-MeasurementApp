@@ -4,19 +4,36 @@ struct ToggleImmersiveSpaceButton: View {
     @Binding var state: AppModel.ImmersionState
     @Environment(\.openImmersiveSpace) var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
+    @EnvironmentObject var appModel: AppModel
 
     var body: some View {
         Button {
-            switch state {
-            case .none:
-                Task {
-                    state = .immersed
+            Task {
+                switch state {
+                case .none:
+                    print("Opening immersive space")
                     await openImmersiveSpace(id: "ImmersiveSpace")
-                }
-            case .immersed:
-                Task {
-                    state = .none
-                    await dismissImmersiveSpace()
+                    print("Immersive space opened")
+                    state = .immersed
+                    
+                    // Impostiamo showControlPanel dopo un breve ritardo
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        print("Attivazione control panel")
+                        appModel.setShowControlPanel(true)
+                    }
+                case .immersed:
+                    print("Disattivazione control panel")
+                    appModel.setShowControlPanel(false)
+                    
+                    // Dismissiamo lo spazio immersivo dopo un breve ritardo
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        Task {
+                            print("Closing immersive space")
+                            await dismissImmersiveSpace()
+                            print("Immersive space closed")
+                            state = .none
+                        }
+                    }
                 }
             }
         } label: {

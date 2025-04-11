@@ -8,9 +8,10 @@ class AppModel: ObservableObject {
     @Published var keypoints: [KeyPoint] = []
     @Published var measurements: [Measurement] = []
     @Published var selectedMeasurementUnit: MeasurementUnit = .centimeters
+    @Published var showControlPanel: Bool = false
     
-    // Proprietà per la gestione del pinch
-    @Published var isPinching: Bool = false
+    // Proprietà per la gestione del drag
+    @Published var isDragging: Bool = false
     @Published var selectedKeypoint: KeyPoint? = nil
     
     private var cancellables = Set<AnyCancellable>()
@@ -21,6 +22,8 @@ class AppModel: ObservableObject {
            let savedUnit = MeasurementUnit(rawValue: savedUnitString) {
             selectedMeasurementUnit = savedUnit
         }
+        
+        print("AppModel inizializzato")
     }
     
     enum ImmersionState {
@@ -31,18 +34,33 @@ class AppModel: ObservableObject {
     func toggleImmersion() {
         switch immersionState {
         case .none:
+            print("Passaggio a immersed")
             immersionState = .immersed
         case .immersed:
+            print("Passaggio a none")
             immersionState = .none
         }
     }
     
+    func setShowControlPanel(_ show: Bool) {
+        print("setShowControlPanel chiamato con \(show)")
+        showControlPanel = show
+    }
+    
     func createKeypoint(at position: SIMD3<Float>) {
+        print("Creazione keypoint a \(position)")
         let keypoint = KeyPoint(position: position)
         keypoints.append(keypoint)
+        
+        // Se ci sono almeno due keypoint, crea una misurazione tra gli ultimi due
+        if keypoints.count >= 2 {
+            let lastIndex = keypoints.count - 1
+            createMeasurement(between: keypoints[lastIndex - 1], and: keypoints[lastIndex])
+        }
     }
     
     func removeKeypoint(_ keypoint: KeyPoint) {
+        print("Rimozione keypoint \(keypoint.id)")
         // Rimuovi prima tutte le misurazioni associate
         measurements.removeAll { measurement in
             return measurement.keypoint1.id == keypoint.id || measurement.keypoint2.id == keypoint.id
@@ -60,16 +78,19 @@ class AppModel: ObservableObject {
         }
         
         if !exists {
+            print("Creazione misurazione tra keypoint \(keypoint1.id) e \(keypoint2.id)")
             let measurement = Measurement(keypoint1: keypoint1, keypoint2: keypoint2)
             measurements.append(measurement)
         }
     }
     
     func removeMeasurement(_ measurement: Measurement) {
+        print("Rimozione misurazione \(measurement.id)")
         measurements.removeAll { $0.id == measurement.id }
     }
     
     func clearAllKeypoints() {
+        print("Pulitura di tutti i keypoints")
         measurements.removeAll()
         keypoints.removeAll()
     }
@@ -80,6 +101,7 @@ class AppModel: ObservableObject {
     
     func updateKeypointPosition(_ keypoint: KeyPoint, to newPosition: SIMD3<Float>) {
         if let index = keypoints.firstIndex(where: { $0.id == keypoint.id }) {
+            print("Aggiornamento posizione keypoint \(keypoint.id) a \(newPosition)")
             keypoints[index].position = newPosition
         }
     }

@@ -40,6 +40,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.red)
             .padding()
             
             // Istruzioni
@@ -47,10 +48,11 @@ struct ContentView: View {
                 Text("Istruzioni:")
                     .font(.headline)
                 
-                Text("• Usa il pinch per inserire un keypoint")
-                Text("• Guarda un keypoint per visualizzare il menu")
-                Text("• Pinch sul segmento per rimuovere una misurazione")
-                Text("• Seleziona l'icona di spostamento per riposizionare un punto")
+                Text("• Premi 'Avvia misurazione' per entrare nella modalità immersiva")
+                Text("• Usa il pulsante 'Aggiungi punto' per creare nuovi punti")
+                Text("• Doppio tap su un punto per eliminarlo")
+                Text("• Trascina un punto per spostarlo")
+                Text("• Doppio tap sulla linea per eliminarla")
             }
             .padding()
             .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
