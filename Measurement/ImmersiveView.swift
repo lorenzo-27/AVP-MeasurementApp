@@ -4,20 +4,18 @@ import Combine
 
 struct ImmersiveView: View {
     @EnvironmentObject var appModel: AppModel
+    @State private var subscriptions = Set<AnyCancellable>()
     @State private var contentEntity = Entity()
     @State private var draggedKeypoint: KeyPoint? = nil
     @State private var dragStartPosition: SIMD3<Float>? = nil
+    @State private var hitTestTimer: Timer? = nil
     
     var body: some View {
         ZStack {
-            // Vista principale AR
+            // RealityView per la visualizzazione AR
             RealityView { content in
-                print("Setting up RealityView content")
                 content.add(contentEntity)
             } update: { content in
-                // Debug print per vedere quando viene aggiornata la vista
-                print("Updating RealityView content - keypoints: \(appModel.keypoints.count), measurements: \(appModel.measurements.count)")
-                
                 // Aggiorna i keypoints
                 updateKeypointEntities()
                 
@@ -39,50 +37,29 @@ struct ImmersiveView: View {
                 handleDoubleTap(at: location)
             }
             
-            // Control Panel 2D - diverso approccio per il posizionamento
-            ControlPanel()
-        }
-        .onChange(of: appModel.showControlPanel) { newValue in
-            print("showControlPanel changed to: \(newValue)")
-        }
-    }
-    
-    // Struttura separata per il pannello di controllo
-    struct ControlPanel: View {
-        @EnvironmentObject var appModel: AppModel
-        
-        var body: some View {
-            VStack {
-                Spacer()
-                
-                if appModel.showControlPanel {
-                    Button(action: {
-                        print("Add Keypoint button tapped")
-                        addNewKeypoint()
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Aggiungi punto")
+            // Pannello di controllo 2D quando in modalità immersiva
+            if appModel.showControlPanel {
+                VStack {
+                    Spacer()
+                    
+                    // Pannello con il bottone per aggiungere keypoints
+                    HStack {
+                        Spacer()
+                        
+                        Button(action: {
+                            addNewKeypoint()
+                        }) {
+                            Label("Aggiungi punto", systemImage: "plus.circle.fill")
+                                .font(.headline)
+                                .padding()
+                                .background(.ultraThinMaterial)
+                                .clipShape(Capsule())
                         }
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(20)
-                        .foregroundColor(.white)
+                        .padding(.trailing)
                     }
-                    .padding(.bottom, 40)
-                    .transition(.move(edge: .bottom))
-                    .id("controlPanel-\(appModel.showControlPanel)")
-                    .onAppear {
-                        print("Control panel appeared")
-                    }
+                    .padding(.bottom)
                 }
             }
-        }
-        
-        func addNewKeypoint() {
-            // Posizione di default davanti all'utente
-            let defaultPosition = SIMD3<Float>(0, 0, -0.5)
-            appModel.createKeypoint(at: defaultPosition)
         }
     }
     
@@ -95,13 +72,11 @@ struct ImmersiveView: View {
     private func handleDrag(value: DragGesture.Value) {
         // Se non abbiamo ancora un keypoint da trascinare, facciamo un hit test
         if draggedKeypoint == nil && !appModel.isDragging {
-            print("Inizio drag, cercando keypoint vicino")
             // Implementa qui la logica di hit test con ARKit o RealityKit
             // Per ora simulo un hit test trovando il keypoint più vicino
             let nearestKeypoint = findNearestKeypoint(to: value.location)
             
             if let keypoint = nearestKeypoint {
-                print("Keypoint trovato per drag: \(keypoint.id)")
                 draggedKeypoint = keypoint
                 dragStartPosition = keypoint.position
                 appModel.selectedKeypoint = keypoint
@@ -112,6 +87,7 @@ struct ImmersiveView: View {
         // Se stiamo trascinando un keypoint, aggiorna la sua posizione
         if let keypoint = draggedKeypoint, appModel.isDragging {
             // Calcoliamo il movimento in 3D basato sul drag 2D
+            // Questa è una semplificazione, in una app reale dovresti usare ARKit o RealityKit per il calcolo corretto
             let dragDelta = SIMD3<Float>(
                 Float(value.translation.width) * 0.01,
                 Float(-value.translation.height) * 0.01,
@@ -126,15 +102,12 @@ struct ImmersiveView: View {
     }
     
     private func handleDoubleTap(at location: CGPoint) {
-        print("Double tap rilevato a \(location)")
         // Implementa un hit test per trovare cosa è stato toccato
         // Simulo un hit test trovando l'entità più vicina
         if let tappedKeypoint = findNearestKeypoint(to: location) {
-            print("Doppio tap su keypoint: \(tappedKeypoint.id)")
             // Elimina il keypoint
             appModel.removeKeypoint(tappedKeypoint)
         } else if let tappedMeasurement = findNearestMeasurement(to: location) {
-            print("Doppio tap su measurement: \(tappedMeasurement.id)")
             // Elimina la misurazione
             appModel.removeMeasurement(tappedMeasurement)
         }
@@ -142,7 +115,9 @@ struct ImmersiveView: View {
     
     private func findNearestKeypoint(to location: CGPoint) -> KeyPoint? {
         // In una implementazione reale, dovresti usare un vero hit test con ARKit o RealityKit
+        // Per ora, simulo un hit test restituendo un keypoint casuale dall'array
         if !appModel.keypoints.isEmpty {
+            // In un'app reale, cerca il keypoint più vicino al punto toccato
             return appModel.keypoints.randomElement()
         }
         return nil
@@ -150,7 +125,9 @@ struct ImmersiveView: View {
     
     private func findNearestMeasurement(to location: CGPoint) -> Measurement? {
         // In una implementazione reale, dovresti usare un vero hit test con ARKit o RealityKit
+        // Per ora, simulo un hit test restituendo una misurazione casuale dall'array
         if !appModel.measurements.isEmpty {
+            // In un'app reale, cerca la misurazione più vicina al punto toccato
             return appModel.measurements.randomElement()
         }
         return nil
@@ -182,7 +159,6 @@ struct ImmersiveView: View {
                     modelEntity.model?.materials = [material]
                 }
             } else {
-                print("Creazione nuova entità per keypoint \(keypoint.id)")
                 // Crea una nuova entità per il keypoint
                 let sphere = ModelEntity(
                     mesh: .generateSphere(radius: 0.02),
@@ -216,7 +192,6 @@ struct ImmersiveView: View {
                 // Aggiorna la linea e l'etichetta
                 updateMeasurementLine(entity, for: measurement)
             } else {
-                print("Creazione nuova entità per misurazione \(measurement.id)")
                 // Crea una nuova entità per la misurazione
                 let measurementEntity = Entity()
                 measurementEntity.name = measurementID

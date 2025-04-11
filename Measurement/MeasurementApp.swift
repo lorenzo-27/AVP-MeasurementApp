@@ -14,6 +14,6 @@ struct MeasurementApp: App {
             ImmersiveView()
                 .environmentObject(appModel)
         }
-        .immersionStyle(selection: .constant(.progressive), in: .progressive)
+        .immersionStyle(selection: .constant(.mixed), in: .mixed)
     }
 }
