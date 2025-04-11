@@ -3,17 +3,17 @@
     "objectMetadataList" : [
       [
         "C6A7F375-BFE9-46E0-9EA6-1A6B150F43FD",
-        "Root"
+        "Root",
+        "SkyDome"
       ],
       {
-        "disallowsFraming" : false,
-        "isExpanded" : true,
+        "disallowsFraming" : true,
+        "isExpanded" : false,
         "isLocked" : false
       },
       [
         "C6A7F375-BFE9-46E0-9EA6-1A6B150F43FD",
-        "Root",
-        "Video_Dock"
+        "Root"
       ],
       {
         "disallowsFraming" : false,
@@ -23,10 +23,10 @@
       [
         "C6A7F375-BFE9-46E0-9EA6-1A6B150F43FD",
         "Root",
-        "SkyDome"
+        "Video_Dock"
       ],
       {
-        "disallowsFraming" : true,
+        "disallowsFraming" : false,
         "isExpanded" : false,
         "isLocked" : false
       }
