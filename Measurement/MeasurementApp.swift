@@ -15,5 +15,11 @@ struct MeasurementApp: App {
                 .environmentObject(appModel)
         }
         .immersionStyle(selection: .constant(.mixed), in: .mixed)
+        
+        WindowGroup(id: "ControlPanel") {
+            ControlPanelView()
+                .environmentObject(appModel)
+        }
+        .defaultSize(width: 300, height: 100)
     }
 }

@@ -4,6 +4,8 @@ struct ToggleImmersiveSpaceButton: View {
     @Binding var state: AppModel.ImmersionState
     @Environment(\.openImmersiveSpace) var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
+    @Environment(\.openWindow) var openWindow
+    @Environment(\.dismissWindow) var dismissWindow
     @EnvironmentObject var appModel: AppModel
 
     var body: some View {
@@ -14,12 +16,18 @@ struct ToggleImmersiveSpaceButton: View {
                     state = .immersed
                     appModel.showControlPanel = true
                     await openImmersiveSpace(id: "ImmersiveSpace")
+                    openWindow(id: "ControlPanel")
+                    appModel.controlPanalePresented = true
                 }
             case .immersed:
                 Task {
                     state = .none
                     appModel.showControlPanel = false
                     await dismissImmersiveSpace()
+                    if appModel.controlPanalePresented {
+                        dismissWindow(id: "ControlPanel")
+                        appModel.controlPanalePresented = false
+                    }
                 }
             }
         } label: {

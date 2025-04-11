@@ -14,6 +14,9 @@ class AppModel: ObservableObject {
     @Published var isDragging: Bool = false
     @Published var selectedKeypoint: KeyPoint? = nil
     
+    // Proprietà per la gestione della finestra di controllo
+    @Published var controlPanalePresented: Bool = false
+    
     private var cancellables = Set<AnyCancellable>()
     
     init() {
@@ -38,6 +41,11 @@ class AppModel: ObservableObject {
             immersionState = .none
             showControlPanel = false
         }
+    }
+    
+    func addNewKeypoint() {
+        let defaultPosition = SIMD3<Float>(0, 1.5, -0.7) // Ad altezza degli occhi e a distanza adeguata
+        createKeypoint(at: defaultPosition)
     }
     
     func createKeypoint(at position: SIMD3<Float>) {

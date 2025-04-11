@@ -15,6 +15,10 @@ struct ImmersiveView: View {
             // RealityView per la visualizzazione AR
             RealityView { content in
                 content.add(contentEntity)
+                
+                // Configurazione iniziale dello spazio AR
+                setupARSession()
+
             } update: { content in
                 // Aggiorna i keypoints
                 updateKeypointEntities()
@@ -36,36 +40,34 @@ struct ImmersiveView: View {
             .onTapGesture(count: 2) { location in
                 handleDoubleTap(at: location)
             }
-            
-            // Pannello di controllo 2D quando in modalità immersiva
-            if appModel.showControlPanel {
-                VStack {
-                    Spacer()
-                    
-                    // Pannello con il bottone per aggiungere keypoints
-                    HStack {
-                        Spacer()
-                        
-                        Button(action: {
-                            addNewKeypoint()
-                        }) {
-                            Label("Aggiungi punto", systemImage: "plus.circle.fill")
-                                .font(.headline)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(Capsule())
-                        }
-                        .padding(.trailing)
-                    }
-                    .padding(.bottom)
-                }
+            .onTapGesture { location in
+                handleSingleTap(at: location)
             }
         }
     }
     
+    private func setupARSession() {
+        // Qui si potrebbe configurare una sessione AR per ottenere una stima
+        // più accurata delle dimensioni e della posizione dell'utente
+        // Per ora simuliamo solo il posizionamento corretto
+    }
+    
+    private func handleSingleTap(at location: CGPoint) {
+        // Implementare l'hitTest con ARKit per posizionare i punti sulle superfici reali
+        // Per ora creiamo un punto davanti all'utente
+        if appModel.keypoints.isEmpty {
+            addNewKeypoint()
+        }
+    }
+    
     private func addNewKeypoint() {
-        // Posizione di default davanti all'utente
-        let defaultPosition = SIMD3<Float>(0, 0, -0.5)
+        // Posizione di default davanti all'utente, ad altezza degli occhi
+        // Usiamo una posizione più naturale
+        let defaultPosition = SIMD3<Float>(
+            Float.random(in: -0.3...0.3),  // Leggera variazione sull'asse X
+            1.5,                          // Altezza approssimativa degli occhi
+            0 + Float.random(in: -0.2...0.2)  // Distanza confortevole con leggera variazione
+        )
         appModel.createKeypoint(at: defaultPosition)
     }
     
@@ -86,11 +88,10 @@ struct ImmersiveView: View {
         
         // Se stiamo trascinando un keypoint, aggiorna la sua posizione
         if let keypoint = draggedKeypoint, appModel.isDragging {
-            // Calcoliamo il movimento in 3D basato sul drag 2D
-            // Questa è una semplificazione, in una app reale dovresti usare ARKit o RealityKit per il calcolo corretto
+            // Miglioriamo il movimento in 3D basato sul drag 2D
             let dragDelta = SIMD3<Float>(
-                Float(value.translation.width) * 0.01,
-                Float(-value.translation.height) * 0.01,
+                Float(value.translation.width) * 0.005,
+                Float(-value.translation.height) * 0.005,
                 0 // Manteniamo la stessa profondità per semplicità
             )
             
@@ -132,6 +133,29 @@ struct ImmersiveView: View {
         }
         return nil
     }
+    
+    private func createKeypointEntity(for keypoint: KeyPoint) -> ModelEntity {
+            // Migliorata la visualizzazione dei punti
+            let sphere = ModelEntity(
+                mesh: .generateSphere(radius: 0.015),
+                materials: [SimpleMaterial(color: .blue, isMetallic: true)]
+            )
+            sphere.name = "keypoint_\(keypoint.id.uuidString)"
+            sphere.position = keypoint.position
+            
+            // Aggiungiamo un elemento visivo per rendere più facile vedere il punto
+            let ring = ModelEntity(
+                mesh: .generateSphere(radius: 2),
+                materials: [SimpleMaterial(color: .white, isMetallic: false)]
+            )
+            ring.orientation = simd_quatf(angle: .pi/2, axis: [1, 0, 0])
+            sphere.addChild(ring)
+            
+            // Aggiungi un componente di collisione per l'interazione
+            sphere.collision = CollisionComponent(shapes: [.generateSphere(radius: 0.03)])
+            
+            return sphere
+        }
     
     private func updateKeypointEntities() {
         // Rimuovi entità obsolete
