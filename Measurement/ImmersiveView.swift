@@ -47,14 +47,10 @@ struct ImmersiveView: View {
     }
     
     private func setupARSession() {
-        // Qui si potrebbe configurare una sessione AR per ottenere una stima
-        // più accurata delle dimensioni e della posizione dell'utente
-        // Per ora simuliamo solo il posizionamento corretto
     }
     
     private func handleSingleTap(at location: CGPoint) {
-        // Implementare l'hitTest con ARKit per posizionare i punti sulle superfici reali
-        // Per ora creiamo un punto davanti all'utente
+        // TODO: mplementare l'hitTest con ARKit per posizionare i punti sulle superfici reali
         if appModel.keypoints.isEmpty {
             addNewKeypoint()
         }
@@ -62,11 +58,10 @@ struct ImmersiveView: View {
     
     private func addNewKeypoint() {
         // Posizione di default davanti all'utente, ad altezza degli occhi
-        // Usiamo una posizione più naturale
         let defaultPosition = SIMD3<Float>(
-            Float.random(in: -0.3...0.3),  // Leggera variazione sull'asse X
-            1.5,                          // Altezza approssimativa degli occhi
-            0 + Float.random(in: -0.2...0.2)  // Distanza confortevole con leggera variazione
+            Float.random(in: -0.3...0.3),       // Leggera variazione sull'asse X
+            1.5,                                // Altezza approssimativa degli occhi
+            0 + Float.random(in: -0.2...0.2)    // Distanza confortevole con leggera variazione
         )
         appModel.createKeypoint(at: defaultPosition)
     }
@@ -74,8 +69,6 @@ struct ImmersiveView: View {
     private func handleDrag(value: DragGesture.Value) {
         // Se non abbiamo ancora un keypoint da trascinare, facciamo un hit test
         if draggedKeypoint == nil && !appModel.isDragging {
-            // Implementa qui la logica di hit test con ARKit o RealityKit
-            // Per ora simulo un hit test trovando il keypoint più vicino
             let nearestKeypoint = findNearestKeypoint(to: value.location)
             
             if let keypoint = nearestKeypoint {
@@ -115,27 +108,20 @@ struct ImmersiveView: View {
     }
     
     private func findNearestKeypoint(to location: CGPoint) -> KeyPoint? {
-        // In una implementazione reale, dovresti usare un vero hit test con ARKit o RealityKit
-        // Per ora, simulo un hit test restituendo un keypoint casuale dall'array
         if !appModel.keypoints.isEmpty {
-            // In un'app reale, cerca il keypoint più vicino al punto toccato
             return appModel.keypoints.randomElement()
         }
         return nil
     }
     
     private func findNearestMeasurement(to location: CGPoint) -> Measurement? {
-        // In una implementazione reale, dovresti usare un vero hit test con ARKit o RealityKit
-        // Per ora, simulo un hit test restituendo una misurazione casuale dall'array
         if !appModel.measurements.isEmpty {
-            // In un'app reale, cerca la misurazione più vicina al punto toccato
             return appModel.measurements.randomElement()
         }
         return nil
     }
     
     private func createKeypointEntity(for keypoint: KeyPoint) -> ModelEntity {
-            // Migliorata la visualizzazione dei punti
             let sphere = ModelEntity(
                 mesh: .generateSphere(radius: 0.015),
                 materials: [SimpleMaterial(color: .blue, isMetallic: true)]
@@ -143,7 +129,6 @@ struct ImmersiveView: View {
             sphere.name = "keypoint_\(keypoint.id.uuidString)"
             sphere.position = keypoint.position
             
-            // Aggiungiamo un elemento visivo per rendere più facile vedere il punto
             let ring = ModelEntity(
                 mesh: .generateSphere(radius: 2),
                 materials: [SimpleMaterial(color: .white, isMetallic: false)]
@@ -261,7 +246,7 @@ struct ImmersiveView: View {
     private func createLabelEntity(for measurement: Measurement) -> Entity {
         // Crea un'etichetta per mostrare la misura
         let distance = measurement.calculateDistance()
-        let formattedDistance = appModel.selectedMeasurementUnit.formatDistance(
+        let _ = appModel.selectedMeasurementUnit.formatDistance(
             appModel.selectedMeasurementUnit.convert(distanceInMeters: distance)
         )
         
@@ -307,7 +292,7 @@ struct ImmersiveView: View {
             
             // Aggiorna il testo mostrato (in un'implementazione reale, useresti un TextEntity di RealityKit)
             let distance = measurement.calculateDistance()
-            let formattedDistance = appModel.selectedMeasurementUnit.formatDistance(
+            let _ = appModel.selectedMeasurementUnit.formatDistance(
                 appModel.selectedMeasurementUnit.convert(distanceInMeters: distance)
             )
         }
